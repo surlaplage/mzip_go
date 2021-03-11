@@ -4,6 +4,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"regexp"
@@ -13,20 +14,69 @@ import (
 /*	is this a multiline comment?,
 	good
 */
+type book struct {
+	Dictionary map[int]string `json:"dictionary"`
+	Text       []int          `json:"text"`
+}
 
 func main() {
 	// for now just do it sequentially.
 	fmt.Println("start here")
 	fileContents := readMyFile("dracula.txt")
 	fmt.Printf("%.50s...\n", fileContents)
-	// split on word boundary
+	// create an array split on word boundary
 	tokens := splitString(fileContents)
+	// from this array, create a dictionary of unique
+	// tokens, with a count of occurences for each
 	dict := createDictionary(tokens)
 	fmt.Printf("Value for \"the\": %d\n", dict["the"])
-	sortedDict := sortDictionary(dict)
-	fmt.Printf("Value for \"the\": %d\n", sortedDict["the"])
+	// now create a new dictionary, so the most common words
+	// have the shortest numbers
+	lookupMap := sortDictionary(dict)
+	fmt.Printf("Value for \"the\": %d\n", lookupMap["the"])
+
+	// now create an array by looking up the value for
+	// each word
+	encoded := encode(lookupMap, tokens)
+	// when we save, we're going to need the reverse dictionary
+	// to map the numbers back to the words.
+	reverseDict := createReverseDict(lookupMap)
+	// the book is the reverse dictionary plus the int array
+	book := createBook(reverseDict, encoded)
+	// write it to a json file
+	writeMyFileAsJson("intermediate.json", book)
+
+	//end of part 1
+
 	fmt.Println("fin")
 
+}
+
+func createBook(reverseDict map[int]string, words []int) book {
+	thisBook := book{reverseDict, words}
+	return thisBook
+}
+
+func createReverseDict(lookupMap map[string]int) map[int]string {
+	var result = make(map[int]string)
+	for key, value := range lookupMap {
+		result[value] = key
+	}
+	return result
+}
+
+func encode(lookupMap map[string]int, tokens []string) []int {
+
+	// create a slice same length as input token slice
+	// array length would need to be known before hand
+	var result = make([]int, len(tokens))
+
+	for i, element := range tokens {
+		// convert each word to corresponding index
+		result[i] = lookupMap[element]
+	}
+
+	return result
 }
 
 // create a dictionary of tokens, with the count of
@@ -53,23 +103,21 @@ func createDictionary(tokens []string) map[string]int {
 // so we'll have to create an array of tuples
 func sortDictionary(dict map[string]int) map[string]int {
 
-	type ttuple struct {
+	type wordCount struct {
 		key   string
 		value int
 	}
 
 	// make a slice with capacity equal to the size of the dictionary
 	fmt.Printf("Dict has %d entries\n", len(dict))
-	var words = make([]ttuple, len(dict))
+	var words = make([]wordCount, 0, len(dict))
 
 	// populate the slice with the word,count pair
-	iterations := 0
 	for k, v := range dict {
-		iterations++
-		var entry = ttuple{k, v}
+		var entry = wordCount{k, v}
 		words = append(words, entry)
 	}
-	fmt.Printf("Iterated through %d entries\n", iterations)
+
 	// now sort the slice, most common words first
 	// but how do I reverse it, sort.Sort(sort.Reverse(sort.Slice))) is showing an error
 	// and I don't want to change my "less" function to actually return "more"
@@ -77,18 +125,16 @@ func sortDictionary(dict map[string]int) map[string]int {
 	// looks like I have to implement the Interface
 	//TODO: take out the hack and implement full interface to allow use
 	// of sort.Reverse
-	fmt.Printf("!Words has %d entries\n", len(words))
+
+	// Where less means earlier in sort
 	sort.Slice(words, func(i, j int) bool { return words[i].value > words[j].value })
-	fmt.Printf("!Words has %d entries\n", len(words))
 
 	sortedDict := make(map[string]int)
-	iterations = 0
 	for i, entry := range words {
 		//fmt.Printf("Pos: %d, key: %s, value: %d\n", i, entry.key, entry.value)
-		iterations++
 		sortedDict[entry.key] = i
 	}
-	fmt.Printf("Iterated through %d entries\n", iterations)
+
 	return sortedDict
 
 }
@@ -100,6 +146,17 @@ func readMyFile(filePath string) string {
 		panic(err)
 	}
 	return string(dat)
+}
+
+func writeMyFileAsJson(filePath string, contents book) {
+	lalala, err := json.Marshal(contents)
+	if err != nil {
+		panic(err)
+	}
+	err = os.WriteFile(filePath, lalala, 0666)
+	if err != nil {
+		panic(err)
+	}
 }
 
 func splitString(source string) []string {
