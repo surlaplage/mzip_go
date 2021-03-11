@@ -149,11 +149,11 @@ func readMyFile(filePath string) string {
 }
 
 func writeMyFileAsJson(filePath string, contents book) {
-	lalala, err := json.Marshal(contents)
+	jsonifiedBook, err := json.Marshal(contents)
 	if err != nil {
 		panic(err)
 	}
-	err = os.WriteFile(filePath, lalala, 0666)
+	err = os.WriteFile(filePath, jsonifiedBook, 0666)
 	if err != nil {
 		panic(err)
 	}
