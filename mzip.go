@@ -155,6 +155,8 @@ func writeMyFileAsJSON(filePath string, contents book) {
 }
 
 func splitString(source string) []string {
+	// ha ha, this doesn't work as I'd like it in go
+	// as it doesn't return the boundaries in the array.
 	re := regexp.MustCompile("/\\w+|\\s+|[^\\s\\w]+/g")
 	return re.Split(source, -1)
 }
