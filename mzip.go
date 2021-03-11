@@ -42,19 +42,14 @@ func main() {
 	// to map the numbers back to the words.
 	reverseDict := createReverseDict(lookupMap)
 	// the book is the reverse dictionary plus the int array
-	book := createBook(reverseDict, encoded)
+	book := book{reverseDict, encoded}
 	// write it to a json file
-	writeMyFileAsJson("intermediate.json", book)
+	writeMyFileAsJSON("intermediate.json", book)
 
 	//end of part 1
 
 	fmt.Println("fin")
 
-}
-
-func createBook(reverseDict map[int]string, words []int) book {
-	thisBook := book{reverseDict, words}
-	return thisBook
 }
 
 func createReverseDict(lookupMap map[string]int) map[int]string {
@@ -148,7 +143,7 @@ func readMyFile(filePath string) string {
 	return string(dat)
 }
 
-func writeMyFileAsJson(filePath string, contents book) {
+func writeMyFileAsJSON(filePath string, contents book) {
 	jsonifiedBook, err := json.Marshal(contents)
 	if err != nil {
 		panic(err)
