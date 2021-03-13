@@ -6,9 +6,12 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"os"
 	"regexp"
 	"sort"
+	"strings"
+	"time"
 )
 
 /*	is this a multiline comment?,
@@ -21,9 +24,10 @@ type book struct {
 
 func main() {
 	// for now just do it sequentially.
+	start := time.Now()
 	fmt.Println("start here")
 	fileContents := readMyFile("dracula.txt")
-	fmt.Printf("%.50s...\n", fileContents)
+	fmt.Printf("%.80s...\n", fileContents)
 	// create an array split on word boundary
 	tokens := splitString(fileContents)
 	// from this array, create a dictionary of unique
@@ -46,12 +50,36 @@ func main() {
 	// write it to a json file
 	writeMyFileAsJSON("intermediate.json", book)
 
+	result := rehydrate(book)
+	elapsed := time.Since(start)
+	log.Printf("Roundtrip took %s", elapsed)
+
+	fmt.Printf("%.80s...\n", result)
+
 	//end of part 1
 
 	fmt.Println("fin")
 
 }
 
+func rehydrate(book book) string {
+	var bookText strings.Builder
+
+	dictionary := book.Dictionary
+	text := book.Text
+
+	for _, wordIndex := range text {
+		// regex is not returning the boundaries
+		// so inserting a space
+		// wow, this naive string concat is really slow
+		// need to check what's happening.
+		// bookText += dictionary[wordIndex] + " "
+		// Builder much faster as expected :)
+		bookText.WriteString(dictionary[wordIndex])
+		bookText.WriteString(" ")
+	}
+	return bookText.String()
+}
 func createReverseDict(lookupMap map[string]int) map[int]string {
 	var result = make(map[int]string)
 	for key, value := range lookupMap {
@@ -156,6 +184,7 @@ func writeMyFileAsJSON(filePath string, contents book) {
 
 func splitString(source string) []string {
 	// ha ha, this doesn't work as I'd like it in go
+	// (and it does in typescript)
 	// as it doesn't return the boundaries in the array.
 	re := regexp.MustCompile("/\\w+|\\s+|[^\\s\\w]+/g")
 	return re.Split(source, -1)
