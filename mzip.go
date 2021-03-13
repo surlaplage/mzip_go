@@ -18,8 +18,8 @@ import (
 	good
 */
 type book struct {
-	Dictionary map[int]string `json:"dictionary"`
-	Text       []int          `json:"text"`
+	Dictionary []string `json:"dictionary"`
+	Text       []int    `json:"text"`
 }
 
 func main() {
@@ -80,8 +80,8 @@ func rehydrate(book book) string {
 	}
 	return bookText.String()
 }
-func createReverseDict(lookupMap map[string]int) map[int]string {
-	var result = make(map[int]string)
+func createReverseDict(lookupMap map[string]int) []string {
+	var result = make([]string, len(lookupMap))
 	for key, value := range lookupMap {
 		result[value] = key
 	}
